@@ -478,6 +478,66 @@ function st(fn,c,w){ctx.beginPath();fn();ctx.strokeStyle=c||OLC;ctx.lineWidth=w|
 
 const HX=130,HY=105,BX=130,BY=170;
 
+// Cute puppy bark using Web Audio API
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+function playBark(){
+  const t=audioCtx.currentTime;
+  // Short yappy bark
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='square';
+  o.frequency.setValueAtTime(600,t);
+  o.frequency.linearRampToValueAtTime(900,t+0.04);
+  o.frequency.linearRampToValueAtTime(700,t+0.08);
+  o.frequency.linearRampToValueAtTime(400,t+0.12);
+  g.gain.setValueAtTime(0.15,t);
+  g.gain.linearRampToValueAtTime(0.2,t+0.03);
+  g.gain.linearRampToValueAtTime(0,t+0.14);
+  o.start(t);o.stop(t+0.15);
+}
+function playHappyBark(){
+  playBark();
+  setTimeout(()=>playBark(),180);
+}
+function playWhimper(){
+  const t=audioCtx.currentTime;
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='sine';
+  o.frequency.setValueAtTime(800,t);
+  o.frequency.linearRampToValueAtTime(500,t+0.25);
+  g.gain.setValueAtTime(0.1,t);
+  g.gain.linearRampToValueAtTime(0,t+0.28);
+  o.start(t);o.stop(t+0.3);
+}
+function playMunch(){
+  const t=audioCtx.currentTime;
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='square';
+  o.frequency.setValueAtTime(200,t);
+  o.frequency.setValueAtTime(150,t+0.06);
+  g.gain.setValueAtTime(0.08,t);
+  g.gain.linearRampToValueAtTime(0,t+0.08);
+  o.start(t);o.stop(t+0.1);
+  setTimeout(()=>playMunch2(),120);
+}
+function playMunch2(){
+  const t=audioCtx.currentTime;
+  const o=audioCtx.createOscillator();
+  const g=audioCtx.createGain();
+  o.connect(g);g.connect(audioCtx.destination);
+  o.type='square';
+  o.frequency.setValueAtTime(180,t);
+  o.frequency.setValueAtTime(130,t+0.06);
+  g.gain.setValueAtTime(0.08,t);
+  g.gain.linearRampToValueAtTime(0,t+0.08);
+  o.start(t);o.stop(t+0.1);
+}
+
 function drawDog(){
   ctx.clearRect(0,0,260,300);
   const b=Math.sin(G.br)*2.5;
@@ -738,17 +798,17 @@ function trickMoveAnim(){
 
 const moods={ecstatic:['Mochi is OVER THE MOON!','Mochi has never been happier!','Mochi is living the dream!'],happy:['Mochi is feeling happy!','Mochi is wagging their tail!','Mochi is a happy pup!'],content:['Mochi is feeling cozy.','Mochi is doing okay!','Mochi is vibing.'],hungry:['Mochi is getting hungry...','Mochi wants a snack!','Mochi eyes the treat jar...'],tired:['Mochi is getting sleepy...','Mochi needs a nap.','*yawn*'],sad:['Mochi misses you...','Mochi needs some love!','Pet me please?']};
 function updateMood(){const a=(G.love+G.food+G.energy)/3;let m;if(a>85)m='ecstatic';else if(a>65)m='happy';else if(a>45)m='content';else if(G.food<30)m='hungry';else if(G.energy<30)m='tired';else m='sad';G.mood=m;moodEl.textContent=moods[m][Math.floor(Math.random()*moods[m].length)];if(m==='tired'){G.eyes='closed';G.mouth=false}else if(m==='ecstatic'){G.eyes='heart';G.mouth=true}else if(m==='happy'){G.eyes='open';G.mouth=true}else{G.eyes='open';G.mouth=false}}
-function tapDog(){if(G.busy)return;particle(['💕','💖','✨','🥰'][Math.floor(Math.random()*4)])}
+function tapDog(){if(G.busy)return;playBark();particle(['💕','💖','✨','🥰'][Math.floor(Math.random()*4)])}
 
 const petSays=['Woof woof!','That feels nice!','*happy tail wag*','More pets!','I love you!','*nuzzles*','Best day ever!','*licks your hand*','Awoo~','*belly rub time*','Bork bork!'];
 const feedSays=['Yummy!','*munch munch*','More treats?!','NOM NOM','*happy chomps*','Best snack!','So crunchy!','Delicious!'];
 const playSays=['Throw it again!','I got it!','*zooooom*','BALL BALL BALL!','*tippy taps*','Again!'];
 const tricks=[{a:'spin',s:'Look at me spin!',e:'stars'},{a:'wiggle',s:'Shake paw!',e:'open'},{a:'twirl',s:'Rolling over!',e:'closed'},{a:'bounce',s:'High five!',e:'stars'},{a:'wiggle',s:'Aroooooo!',e:'open'}];
 
-function doPet(){if(G.busy)return;G.busy=true;G.love=clamp(G.love+12);G.energy=clamp(G.energy-2);updateBars();G.eyes='closed';petHandAnim();anim('wiggle');say(petSays[Math.floor(Math.random()*petSays.length)]);for(let i=0;i<5;i++)setTimeout(()=>particle('💕'),i*150);setTimeout(()=>{updateMood();G.busy=false},1200)}
-function doFeed(){if(G.busy)return;G.busy=true;G.food=clamp(G.food+18);G.love=clamp(G.love+5);G.energy=clamp(G.energy+5);updateBars();foodBowlAnim();G.eyes='stars';G.mouth=false;G.munching=1.3;anim('bounce');say(feedSays[Math.floor(Math.random()*feedSays.length)]);setTimeout(()=>{G.mouth=true;G.munching=0},800);setTimeout(()=>{updateMood();G.busy=false},1400)}
-function doPlay(){if(G.busy)return;G.busy=true;G.love=clamp(G.love+8);G.energy=clamp(G.energy-15);G.food=clamp(G.food-5);updateBars();G.mouth=true;G.eyes='stars';const pat=chasePatterns[chaseIdx];const dur=pat==='both'?2.4:1.6;const durMs=dur*1000;ballAnim();anim('chase-'+pat);say(playSays[Math.floor(Math.random()*playSays.length)]);setTimeout(()=>particle('💨'),200);setTimeout(()=>particle('🐾'),durMs*0.3);setTimeout(()=>particle('💨'),durMs*0.5);setTimeout(()=>particle('🐾'),durMs*0.7);setTimeout(()=>{particle('✨');say('I caught it!')},durMs*0.85);chaseIdx=(chaseIdx+1)%chasePatterns.length;setTimeout(()=>{updateMood();G.busy=false},durMs+200)}
-function doTrick(){if(G.busy)return;if(G.energy<15){say('Too tired... need rest!');anim('wiggle');return}G.busy=true;const tr=tricks[G.ti];G.ti=(G.ti+1)%tricks.length;G.love=clamp(G.love+10);G.energy=clamp(G.energy-10);updateBars();G.eyes=tr.e;G.mouth=true;if(tr.a!=='spin'&&tr.a!=='twirl')trickMoveAnim();anim(tr.a);say(tr.s);setTimeout(()=>particle('🌟'),150);setTimeout(()=>particle('✨'),400);setTimeout(()=>particle('⭐'),600);setTimeout(()=>{updateMood();G.busy=false},1400)}
+function doPet(){if(G.busy)return;G.busy=true;G.love=clamp(G.love+12);G.energy=clamp(G.energy-2);updateBars();G.eyes='closed';petHandAnim();anim('wiggle');playWhimper();say(petSays[Math.floor(Math.random()*petSays.length)]);for(let i=0;i<5;i++)setTimeout(()=>particle('💕'),i*150);setTimeout(()=>{updateMood();G.busy=false},1200)}
+function doFeed(){if(G.busy)return;G.busy=true;G.food=clamp(G.food+18);G.love=clamp(G.love+5);G.energy=clamp(G.energy+5);updateBars();foodBowlAnim();G.eyes='stars';G.mouth=false;G.munching=1.3;anim('bounce');playBark();say(feedSays[Math.floor(Math.random()*feedSays.length)]);setTimeout(()=>playMunch(),400);setTimeout(()=>{G.mouth=true;G.munching=0},800);setTimeout(()=>{updateMood();G.busy=false},1400)}
+function doPlay(){if(G.busy)return;G.busy=true;G.love=clamp(G.love+8);G.energy=clamp(G.energy-15);G.food=clamp(G.food-5);updateBars();G.mouth=true;G.eyes='stars';const pat=chasePatterns[chaseIdx];const dur=pat==='both'?2.4:1.6;const durMs=dur*1000;ballAnim();anim('chase-'+pat);playHappyBark();say(playSays[Math.floor(Math.random()*playSays.length)]);setTimeout(()=>particle('💨'),200);setTimeout(()=>{particle('🐾');playBark()},durMs*0.3);setTimeout(()=>particle('💨'),durMs*0.5);setTimeout(()=>particle('🐾'),durMs*0.7);setTimeout(()=>{particle('✨');say('I caught it!');playHappyBark()},durMs*0.85);chaseIdx=(chaseIdx+1)%chasePatterns.length;setTimeout(()=>{updateMood();G.busy=false},durMs+200)}
+function doTrick(){if(G.busy)return;if(G.energy<15){say('Too tired... need rest!');playWhimper();anim('wiggle');return}G.busy=true;const tr=tricks[G.ti];G.ti=(G.ti+1)%tricks.length;G.love=clamp(G.love+10);G.energy=clamp(G.energy-10);updateBars();G.eyes=tr.e;G.mouth=true;if(tr.a!=='spin'&&tr.a!=='twirl')trickMoveAnim();anim(tr.a);playBark();say(tr.s);setTimeout(()=>particle('🌟'),150);setTimeout(()=>particle('✨'),400);setTimeout(()=>{particle('⭐');playHappyBark()},600);setTimeout(()=>{updateMood();G.busy=false},1400)}
 
 setInterval(()=>{G.love=clamp(G.love-1);G.food=clamp(G.food-.8);G.energy=clamp(G.energy+.5);updateBars();updateMood()},5000);
 setInterval(()=>{if(G.busy||G.mood==='tired')return;if(Math.random()<.18)say(['*sniffs around*','*tilts head*','*perks ears*','Play with me!','Woof?','*stretches*'][Math.floor(Math.random()*6)],1500)},5500);
@@ -756,5 +816,5 @@ setInterval(()=>{if(G.busy||G.mood==='tired'||G.mood==='ecstatic')return;G.eyes=
 setInterval(()=>{if(!G.busy&&Math.random()<0.3)G.earTwitch=0.4},2800);
 updateBars();updateMood();
 
-function dismissIntro(){const o=document.getElementById('intro');o.classList.add('hide');setTimeout(()=>o.remove(),600);say('Woof! Let\'s be friends!',2500);anim('bounce');for(let i=0;i<6;i++)setTimeout(()=>particle(['💕','✨','🐾','💖','⭐','🌟'][i]),i*200)}
+function dismissIntro(){const o=document.getElementById('intro');o.classList.add('hide');setTimeout(()=>o.remove(),600);playHappyBark();say('Woof! Let\'s be friends!',2500);anim('bounce');for(let i=0;i<6;i++)setTimeout(()=>particle(['💕','✨','🐾','💖','⭐','🌟'][i]),i*200)}
 </script>
