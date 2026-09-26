@@ -481,31 +481,60 @@ const HX=130,HY=105,BX=130,BY=170;
 // Puppy sounds using Web Audio API
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 
+// Noise buffer for breathy/bark texture
+const noiseLen=audioCtx.sampleRate*0.5;
+const noiseBuf=audioCtx.createBuffer(1,noiseLen,audioCtx.sampleRate);
+const noiseData=noiseBuf.getChannelData(0);
+for(let i=0;i<noiseLen;i++)noiseData[i]=Math.random()*2-1;
+
+function makeNoise(dur){
+  const n=audioCtx.createBufferSource();
+  n.buffer=noiseBuf;n.loop=true;
+  return n;
+}
+
 function playBark(){
   const t=audioCtx.currentTime;
-  // Soft puppy "yap" - two layered sine tones with gentle envelope
+  // Layered puppy yap: voiced tone + breathy noise through formant filter
   const o1=audioCtx.createOscillator();
   const o2=audioCtx.createOscillator();
-  const g=audioCtx.createGain();
-  const filt=audioCtx.createBiquadFilter();
-  filt.type='bandpass';filt.frequency.value=800;filt.Q.value=2;
-  o1.connect(filt);o2.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
-  o1.type='sine';
-  o2.type='triangle';
-  // Pitch rises then falls like a yap
-  o1.frequency.setValueAtTime(480,t);
-  o1.frequency.linearRampToValueAtTime(720,t+0.05);
-  o1.frequency.exponentialRampToValueAtTime(380,t+0.18);
-  o2.frequency.setValueAtTime(520,t);
-  o2.frequency.linearRampToValueAtTime(780,t+0.05);
-  o2.frequency.exponentialRampToValueAtTime(400,t+0.18);
-  // Soft attack, quick decay
-  g.gain.setValueAtTime(0,t);
-  g.gain.linearRampToValueAtTime(0.12,t+0.02);
-  g.gain.setValueAtTime(0.12,t+0.06);
-  g.gain.exponentialRampToValueAtTime(0.001,t+0.2);
-  o1.start(t);o1.stop(t+0.22);
-  o2.start(t);o2.stop(t+0.22);
+  const noise=makeNoise();
+  const gTone=audioCtx.createGain();
+  const gNoise=audioCtx.createGain();
+  const gOut=audioCtx.createGain();
+  const f1=audioCtx.createBiquadFilter();
+  const f2=audioCtx.createBiquadFilter();
+  f1.type='bandpass';f1.frequency.value=700;f1.Q.value=3;
+  f2.type='bandpass';f2.frequency.value=1400;f2.Q.value=2;
+
+  o1.connect(gTone);o2.connect(gTone);
+  gTone.connect(f1);f1.connect(gOut);
+  noise.connect(gNoise);gNoise.connect(f2);f2.connect(gOut);
+  gOut.connect(audioCtx.destination);
+
+  o1.type='sawtooth';o2.type='sine';
+  // Puppy bark: quick rise then drop, like "ruff!"
+  o1.frequency.setValueAtTime(350,t);
+  o1.frequency.linearRampToValueAtTime(580,t+0.03);
+  o1.frequency.setValueAtTime(560,t+0.06);
+  o1.frequency.exponentialRampToValueAtTime(280,t+0.15);
+  o2.frequency.setValueAtTime(700,t);
+  o2.frequency.linearRampToValueAtTime(1100,t+0.03);
+  o2.frequency.exponentialRampToValueAtTime(500,t+0.15);
+
+  gTone.gain.setValueAtTime(0,t);
+  gTone.gain.linearRampToValueAtTime(0.09,t+0.01);
+  gTone.gain.setValueAtTime(0.09,t+0.05);
+  gTone.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+
+  gNoise.gain.setValueAtTime(0,t);
+  gNoise.gain.linearRampToValueAtTime(0.06,t+0.005);
+  gNoise.gain.exponentialRampToValueAtTime(0.001,t+0.1);
+
+  gOut.gain.setValueAtTime(0.7,t);
+  o1.start(t);o1.stop(t+0.18);
+  o2.start(t);o2.stop(t+0.18);
+  noise.start(t);noise.stop(t+0.12);
 }
 
 function playHappyBark(){
@@ -514,60 +543,80 @@ function playHappyBark(){
     const t=audioCtx.currentTime;
     const o1=audioCtx.createOscillator();
     const o2=audioCtx.createOscillator();
-    const g=audioCtx.createGain();
-    const filt=audioCtx.createBiquadFilter();
-    filt.type='bandpass';filt.frequency.value=900;filt.Q.value=2;
-    o1.connect(filt);o2.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
-    o1.type='sine';o2.type='triangle';
-    // Higher pitched second yap
-    o1.frequency.setValueAtTime(550,t);
-    o1.frequency.linearRampToValueAtTime(850,t+0.04);
-    o1.frequency.exponentialRampToValueAtTime(450,t+0.16);
-    o2.frequency.setValueAtTime(600,t);
-    o2.frequency.linearRampToValueAtTime(900,t+0.04);
-    o2.frequency.exponentialRampToValueAtTime(480,t+0.16);
-    g.gain.setValueAtTime(0,t);
-    g.gain.linearRampToValueAtTime(0.1,t+0.02);
-    g.gain.setValueAtTime(0.1,t+0.05);
-    g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
-    o1.start(t);o1.stop(t+0.2);
-    o2.start(t);o2.stop(t+0.2);
-  },220);
+    const noise=makeNoise();
+    const gTone=audioCtx.createGain();
+    const gNoise=audioCtx.createGain();
+    const gOut=audioCtx.createGain();
+    const f1=audioCtx.createBiquadFilter();
+    const f2=audioCtx.createBiquadFilter();
+    f1.type='bandpass';f1.frequency.value=800;f1.Q.value=3;
+    f2.type='bandpass';f2.frequency.value=1600;f2.Q.value=2;
+    o1.connect(gTone);o2.connect(gTone);
+    gTone.connect(f1);f1.connect(gOut);
+    noise.connect(gNoise);gNoise.connect(f2);f2.connect(gOut);
+    gOut.connect(audioCtx.destination);
+    o1.type='sawtooth';o2.type='sine';
+    // Higher excited second yap
+    o1.frequency.setValueAtTime(400,t);
+    o1.frequency.linearRampToValueAtTime(650,t+0.025);
+    o1.frequency.exponentialRampToValueAtTime(320,t+0.13);
+    o2.frequency.setValueAtTime(800,t);
+    o2.frequency.linearRampToValueAtTime(1250,t+0.025);
+    o2.frequency.exponentialRampToValueAtTime(550,t+0.13);
+    gTone.gain.setValueAtTime(0,t);
+    gTone.gain.linearRampToValueAtTime(0.08,t+0.01);
+    gTone.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+    gNoise.gain.setValueAtTime(0,t);
+    gNoise.gain.linearRampToValueAtTime(0.05,t+0.005);
+    gNoise.gain.exponentialRampToValueAtTime(0.001,t+0.08);
+    gOut.gain.setValueAtTime(0.7,t);
+    o1.start(t);o1.stop(t+0.16);
+    o2.start(t);o2.stop(t+0.16);
+    noise.start(t);noise.stop(t+0.1);
+  },200);
 }
 
 function playWhimper(){
   const t=audioCtx.currentTime;
   const o=audioCtx.createOscillator();
+  const o2=audioCtx.createOscillator();
   const g=audioCtx.createGain();
   const filt=audioCtx.createBiquadFilter();
-  filt.type='lowpass';filt.frequency.value=1200;
-  o.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
-  o.type='sine';
-  // Gentle descending whine
-  o.frequency.setValueAtTime(650,t);
-  o.frequency.linearRampToValueAtTime(750,t+0.08);
-  o.frequency.exponentialRampToValueAtTime(400,t+0.35);
+  filt.type='lowpass';filt.frequency.value=1000;filt.Q.value=1;
+  o.connect(filt);o2.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
+  o.type='sine';o2.type='sine';
+  // Sad puppy whine with vibrato
+  o.frequency.setValueAtTime(500,t);
+  o.frequency.linearRampToValueAtTime(620,t+0.1);
+  o.frequency.exponentialRampToValueAtTime(350,t+0.4);
+  o2.frequency.setValueAtTime(505,t);
+  o2.frequency.linearRampToValueAtTime(625,t+0.1);
+  o2.frequency.exponentialRampToValueAtTime(355,t+0.4);
   g.gain.setValueAtTime(0,t);
-  g.gain.linearRampToValueAtTime(0.08,t+0.04);
-  g.gain.setValueAtTime(0.07,t+0.15);
-  g.gain.exponentialRampToValueAtTime(0.001,t+0.38);
-  o.start(t);o.stop(t+0.4);
+  g.gain.linearRampToValueAtTime(0.07,t+0.05);
+  g.gain.setValueAtTime(0.06,t+0.2);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.42);
+  o.start(t);o.stop(t+0.44);
+  o2.start(t);o2.stop(t+0.44);
 }
 
 function playMunch(){
-  for(let i=0;i<3;i++){
+  // Chomping sounds: short percussive clicks with low resonance
+  for(let i=0;i<4;i++){
     setTimeout(()=>{
       const t=audioCtx.currentTime;
-      const o=audioCtx.createOscillator();
+      const noise=makeNoise();
       const g=audioCtx.createGain();
-      o.connect(g);g.connect(audioCtx.destination);
-      o.type='triangle';
-      o.frequency.setValueAtTime(180+i*20,t);
-      o.frequency.linearRampToValueAtTime(120,t+0.04);
-      g.gain.setValueAtTime(0.06,t);
-      g.gain.exponentialRampToValueAtTime(0.001,t+0.06);
-      o.start(t);o.stop(t+0.07);
-    },i*100);
+      const filt=audioCtx.createBiquadFilter();
+      filt.type='bandpass';filt.frequency.value=300+Math.random()*200;filt.Q.value=8;
+      const filt2=audioCtx.createBiquadFilter();
+      filt2.type='highpass';filt2.frequency.value=100;
+      noise.connect(filt);filt.connect(filt2);filt2.connect(g);g.connect(audioCtx.destination);
+      // Quick snap like jaw closing
+      g.gain.setValueAtTime(0.18,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      noise.start(t);noise.stop(t+0.05);
+    },i*130+Math.random()*30);
   }
 }
 
