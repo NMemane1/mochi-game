@@ -849,5 +849,16 @@ setInterval(()=>{if(G.busy||G.mood==='tired'||G.mood==='ecstatic')return;G.eyes=
 setInterval(()=>{if(!G.busy&&Math.random()<0.3)G.earTwitch=0.4},2800);
 updateBars();updateMood();
 
-function dismissIntro(){const o=document.getElementById('intro');o.classList.add('hide');setTimeout(()=>o.remove(),600);playHappyBark();say('Woof! Let\'s be friends!',2500);anim('bounce');for(let i=0;i<6;i++)setTimeout(()=>particle(['💕','✨','🐾','💖','⭐','🌟'][i]),i*200)}
+function speakBirthday(){
+  if(!('speechSynthesis' in window))return;
+  const msg=new SpeechSynthesisUtterance('Hi Ovi! Happy Birthday! I am Mochi, your new best friend!');
+  msg.rate=1.05;msg.pitch=1.4;msg.volume=0.9;
+  const voices=speechSynthesis.getVoices();
+  const pick=voices.find(v=>/samantha|karen|moira|fiona|female/i.test(v.name))||voices.find(v=>v.lang.startsWith('en'))||voices[0];
+  if(pick)msg.voice=pick;
+  speechSynthesis.speak(msg);
+}
+if('speechSynthesis' in window)speechSynthesis.getVoices();
+
+function dismissIntro(){const o=document.getElementById('intro');o.classList.add('hide');setTimeout(()=>o.remove(),600);speakBirthday();playHappyBark();say('Woof! Happy Birthday Ovi! 🎂',3000);anim('bounce');for(let i=0;i<6;i++)setTimeout(()=>particle(['💕','✨','🐾','💖','⭐','🌟','🎂','🎁'][i%8]),i*200)}
 </script>
