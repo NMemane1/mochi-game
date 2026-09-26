@@ -851,12 +851,37 @@ updateBars();updateMood();
 
 function speakBirthday(){
   if(!('speechSynthesis' in window))return;
-  const msg=new SpeechSynthesisUtterance('Hi Ovi! Happy Birthday! I am Mochi, your new best friend!');
-  msg.rate=1.05;msg.pitch=1.4;msg.volume=0.9;
+  // Wait for voices to load
+  const doSpeak=()=>{
+    const voices=speechSynthesis.getVoices();
+    // Prefer child-like / higher pitched voices
+    const childVoices=['samantha','karen','moira','tessa','fiona','zira','hazel','victoria','susan','shelley'];
+    let pick=null;
+    for(const name of childVoices){
+      pick=voices.find(v=>v.name.toLowerCase().includes(name)&&v.lang.startsWith('en'));
+      if(pick)break;
+    }
+    if(!pick)pick=voices.find(v=>v.lang.startsWith('en')&&/female|girl|child/i.test(v.name));
+    if(!pick)pick=voices.find(v=>v.lang.startsWith('en'));
+    if(!pick)pick=voices[0];
+
+    // Break into two natural phrases with a pause
+    const msg1=new SpeechSynthesisUtterance('Hi Ovi!');
+    msg1.rate=0.92;msg1.pitch=1.6;msg1.volume=1;
+    if(pick)msg1.voice=pick;
+
+    const msg2=new SpeechSynthesisUtterance('Happy Birthday! I am Mochi, your new best friend!');
+    msg2.rate=0.88;msg2.pitch=1.55;msg2.volume=1;
+    if(pick)msg2.voice=pick;
+
+    speechSynthesis.speak(msg1);
+    msg1.onend=()=>{
+      setTimeout(()=>speechSynthesis.speak(msg2),250);
+    };
+  };
   const voices=speechSynthesis.getVoices();
-  const pick=voices.find(v=>/samantha|karen|moira|fiona|female/i.test(v.name))||voices.find(v=>v.lang.startsWith('en'))||voices[0];
-  if(pick)msg.voice=pick;
-  speechSynthesis.speak(msg);
+  if(voices.length>0)doSpeak();
+  else speechSynthesis.onvoiceschanged=doSpeak;
 }
 if('speechSynthesis' in window)speechSynthesis.getVoices();
 
