@@ -99,8 +99,8 @@ h1,.bl{font-family:'Quicksand',sans-serif}
 <div class="intro-overlay" id="intro">
   <div class="intro-card">
     <div class="intro-paw">🐾</div>
-    <h2>Hi Ovi! My name is Mochi!</h2>
-    <p>I'm your fluffy husky friend. Pet me, feed me, and play with me to keep me happy!</p>
+    <h2>Happy Birthday Ovi! 🎂</h2>
+    <p>Hi! I'm Mochi, your fluffy husky friend! I'm your birthday gift — pet me, feed me, and play with me!</p>
     <button onclick="dismissIntro()">Let's Play!</button>
   </div>
 </div>
@@ -478,64 +478,97 @@ function st(fn,c,w){ctx.beginPath();fn();ctx.strokeStyle=c||OLC;ctx.lineWidth=w|
 
 const HX=130,HY=105,BX=130,BY=170;
 
-// Cute puppy bark using Web Audio API
+// Puppy sounds using Web Audio API
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+
 function playBark(){
   const t=audioCtx.currentTime;
-  // Short yappy bark
-  const o=audioCtx.createOscillator();
+  // Soft puppy "yap" - two layered sine tones with gentle envelope
+  const o1=audioCtx.createOscillator();
+  const o2=audioCtx.createOscillator();
   const g=audioCtx.createGain();
-  o.connect(g);g.connect(audioCtx.destination);
-  o.type='square';
-  o.frequency.setValueAtTime(600,t);
-  o.frequency.linearRampToValueAtTime(900,t+0.04);
-  o.frequency.linearRampToValueAtTime(700,t+0.08);
-  o.frequency.linearRampToValueAtTime(400,t+0.12);
-  g.gain.setValueAtTime(0.15,t);
-  g.gain.linearRampToValueAtTime(0.2,t+0.03);
-  g.gain.linearRampToValueAtTime(0,t+0.14);
-  o.start(t);o.stop(t+0.15);
+  const filt=audioCtx.createBiquadFilter();
+  filt.type='bandpass';filt.frequency.value=800;filt.Q.value=2;
+  o1.connect(filt);o2.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
+  o1.type='sine';
+  o2.type='triangle';
+  // Pitch rises then falls like a yap
+  o1.frequency.setValueAtTime(480,t);
+  o1.frequency.linearRampToValueAtTime(720,t+0.05);
+  o1.frequency.exponentialRampToValueAtTime(380,t+0.18);
+  o2.frequency.setValueAtTime(520,t);
+  o2.frequency.linearRampToValueAtTime(780,t+0.05);
+  o2.frequency.exponentialRampToValueAtTime(400,t+0.18);
+  // Soft attack, quick decay
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(0.12,t+0.02);
+  g.gain.setValueAtTime(0.12,t+0.06);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.2);
+  o1.start(t);o1.stop(t+0.22);
+  o2.start(t);o2.stop(t+0.22);
 }
+
 function playHappyBark(){
   playBark();
-  setTimeout(()=>playBark(),180);
+  setTimeout(()=>{
+    const t=audioCtx.currentTime;
+    const o1=audioCtx.createOscillator();
+    const o2=audioCtx.createOscillator();
+    const g=audioCtx.createGain();
+    const filt=audioCtx.createBiquadFilter();
+    filt.type='bandpass';filt.frequency.value=900;filt.Q.value=2;
+    o1.connect(filt);o2.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
+    o1.type='sine';o2.type='triangle';
+    // Higher pitched second yap
+    o1.frequency.setValueAtTime(550,t);
+    o1.frequency.linearRampToValueAtTime(850,t+0.04);
+    o1.frequency.exponentialRampToValueAtTime(450,t+0.16);
+    o2.frequency.setValueAtTime(600,t);
+    o2.frequency.linearRampToValueAtTime(900,t+0.04);
+    o2.frequency.exponentialRampToValueAtTime(480,t+0.16);
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.1,t+0.02);
+    g.gain.setValueAtTime(0.1,t+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.18);
+    o1.start(t);o1.stop(t+0.2);
+    o2.start(t);o2.stop(t+0.2);
+  },220);
 }
+
 function playWhimper(){
   const t=audioCtx.currentTime;
   const o=audioCtx.createOscillator();
   const g=audioCtx.createGain();
-  o.connect(g);g.connect(audioCtx.destination);
+  const filt=audioCtx.createBiquadFilter();
+  filt.type='lowpass';filt.frequency.value=1200;
+  o.connect(filt);filt.connect(g);g.connect(audioCtx.destination);
   o.type='sine';
-  o.frequency.setValueAtTime(800,t);
-  o.frequency.linearRampToValueAtTime(500,t+0.25);
-  g.gain.setValueAtTime(0.1,t);
-  g.gain.linearRampToValueAtTime(0,t+0.28);
-  o.start(t);o.stop(t+0.3);
+  // Gentle descending whine
+  o.frequency.setValueAtTime(650,t);
+  o.frequency.linearRampToValueAtTime(750,t+0.08);
+  o.frequency.exponentialRampToValueAtTime(400,t+0.35);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(0.08,t+0.04);
+  g.gain.setValueAtTime(0.07,t+0.15);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.38);
+  o.start(t);o.stop(t+0.4);
 }
+
 function playMunch(){
-  const t=audioCtx.currentTime;
-  const o=audioCtx.createOscillator();
-  const g=audioCtx.createGain();
-  o.connect(g);g.connect(audioCtx.destination);
-  o.type='square';
-  o.frequency.setValueAtTime(200,t);
-  o.frequency.setValueAtTime(150,t+0.06);
-  g.gain.setValueAtTime(0.08,t);
-  g.gain.linearRampToValueAtTime(0,t+0.08);
-  o.start(t);o.stop(t+0.1);
-  setTimeout(()=>playMunch2(),120);
-}
-function playMunch2(){
-  const t=audioCtx.currentTime;
-  const o=audioCtx.createOscillator();
-  const g=audioCtx.createGain();
-  o.connect(g);g.connect(audioCtx.destination);
-  o.type='square';
-  o.frequency.setValueAtTime(180,t);
-  o.frequency.setValueAtTime(130,t+0.06);
-  g.gain.setValueAtTime(0.08,t);
-  g.gain.linearRampToValueAtTime(0,t+0.08);
-  o.start(t);o.stop(t+0.1);
+  for(let i=0;i<3;i++){
+    setTimeout(()=>{
+      const t=audioCtx.currentTime;
+      const o=audioCtx.createOscillator();
+      const g=audioCtx.createGain();
+      o.connect(g);g.connect(audioCtx.destination);
+      o.type='triangle';
+      o.frequency.setValueAtTime(180+i*20,t);
+      o.frequency.linearRampToValueAtTime(120,t+0.04);
+      g.gain.setValueAtTime(0.06,t);
+      g.gain.exponentialRampToValueAtTime(0.001,t+0.06);
+      o.start(t);o.stop(t+0.07);
+    },i*100);
+  }
 }
 
 function drawDog(){
