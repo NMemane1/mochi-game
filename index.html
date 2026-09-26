@@ -851,10 +851,8 @@ updateBars();updateMood();
 
 function speakBirthday(){
   if(!('speechSynthesis' in window))return;
-  // Wait for voices to load
   const doSpeak=()=>{
     const voices=speechSynthesis.getVoices();
-    // Prefer child-like / higher pitched voices
     const childVoices=['samantha','karen','moira','tessa','fiona','zira','hazel','victoria','susan','shelley'];
     let pick=null;
     for(const name of childVoices){
@@ -865,19 +863,25 @@ function speakBirthday(){
     if(!pick)pick=voices.find(v=>v.lang.startsWith('en'));
     if(!pick)pick=voices[0];
 
-    // Break into two natural phrases with a pause
-    const msg1=new SpeechSynthesisUtterance('Hi Ovi!');
-    msg1.rate=0.92;msg1.pitch=1.6;msg1.volume=1;
-    if(pick)msg1.voice=pick;
+    // Break into small phrases with varied pitch/rate for natural feel
+    const phrases=[
+      {text:'Hi Ovi!',rate:0.85,pitch:1.8,pause:400},
+      {text:'Happy Birthday!',rate:0.78,pitch:1.9,pause:350},
+      {text:'I am Mochi,',rate:0.82,pitch:1.7,pause:200},
+      {text:'your new best friend!',rate:0.8,pitch:1.85,pause:0}
+    ];
 
-    const msg2=new SpeechSynthesisUtterance('Happy Birthday! I am Mochi, your new best friend!');
-    msg2.rate=0.88;msg2.pitch=1.55;msg2.volume=1;
-    if(pick)msg2.voice=pick;
-
-    speechSynthesis.speak(msg1);
-    msg1.onend=()=>{
-      setTimeout(()=>speechSynthesis.speak(msg2),250);
-    };
+    let i=0;
+    function sayNext(){
+      if(i>=phrases.length)return;
+      const p=phrases[i];
+      const u=new SpeechSynthesisUtterance(p.text);
+      u.rate=p.rate;u.pitch=p.pitch;u.volume=1;
+      if(pick)u.voice=pick;
+      u.onend=()=>{i++;setTimeout(sayNext,p.pause)};
+      speechSynthesis.speak(u);
+    }
+    sayNext();
   };
   const voices=speechSynthesis.getVoices();
   if(voices.length>0)doSpeak();
